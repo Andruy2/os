@@ -1,0 +1,68 @@
+Задание 1
+student@Ubuntu-MySQL-VirtualBox:~$ sudo useradd -m -s /bin/bash testuser
+[sudo] пароль для student: 
+student@Ubuntu-MySQL-VirtualBox:~$ grep testuser /etc/passwd
+testuser:x:1004:1006::/home/testuser:/bin/bash
+student@Ubuntu-MySQL-VirtualBox:~$ sudo userdel -r testuser
+userdel: почтовый ящик testuser (/var/mail/testuser) не найден
+student@Ubuntu-MySQL-VirtualBox:~$ id testuser
+id: «testuser»: такого пользователя нет
+
+Задание 2
+student@Ubuntu-MySQL-VirtualBox:~$ sudo addgroup lab2
+Добавляется группа «lab2» (GID 1006) ...
+Готово.
+student@Ubuntu-MySQL-VirtualBox:~$ sudo adduser lab_2_user
+Добавляется пользователь «lab_2_user» ...
+Добавляется новая группа «lab_2_user» (1007) ...
+Добавляется новый пользователь «lab_2_user» (1004) в группу «lab_2_user» ...
+Создаётся домашний каталог «/home/lab_2_user» ...
+Копирование файлов из «/etc/skel» ...
+Введите новый пароль UNIX: 
+Повторите ввод нового пароля UNIX: 
+passwd: пароль успешно обновлён
+Изменение информации о пользователе lab_2_user
+Введите новое значение или нажмите ENTER для выбора значения по умолчанию
+	Полное имя []: 
+	Номер комнаты []: 
+	Рабочий телефон []: 
+	Домашний телефон []: 
+	Другое []: 
+Данная информация корректна? [Y/n] Y
+student@Ubuntu-MySQL-VirtualBox:~$ grep lab2 /etc/group
+lab2:x:1006:
+student@Ubuntu-MySQL-VirtualBox:~$ sudo useradd -m -s /bin/bash user1
+student@Ubuntu-MySQL-VirtualBox:~$ sudo useradd -m -s /bin/bash user2
+student@Ubuntu-MySQL-VirtualBox:~$ id user1
+uid=1005(user1) gid=1008(user1) группы=1008(user1)
+student@Ubuntu-MySQL-VirtualBox:~$ id user2
+uid=1006(user2) gid=1009(user2) группы=1009(user2)
+student@Ubuntu-MySQL-VirtualBox:~$ sudo usermod -g lab2 user1
+student@Ubuntu-MySQL-VirtualBox:~$ id user1
+uid=1005(user1) gid=1006(lab2) группы=1006(lab2)
+student@Ubuntu-MySQL-VirtualBox:~$ sudo usermod -a -G lab2 user2
+student@Ubuntu-MySQL-VirtualBox:~$ id user2
+uid=1006(user2) gid=1009(user2) группы=1009(user2),1006(lab2)
+student@Ubuntu-MySQL-VirtualBox:~$ sudo gpasswd -d user2 lab2
+Удаление пользователя user2 из группы lab2
+student@Ubuntu-MySQL-VirtualBox:~$ id user2
+uid=1006(user2) gid=1009(user2) группы=1009(user2)
+
+Задание 3:
+student@Ubuntu-MySQL-VirtualBox:~$ sudo useradd -m -s /bin/bash adminuser
+student@Ubuntu-MySQL-VirtualBox:~$ sudo passwd adminuser
+Введите новый пароль UNIX: 
+Повторите ввод нового пароля UNIX: 
+passwd: пароль успешно обновлён
+student@Ubuntu-MySQL-VirtualBox:~$ sudo usermod -a -G sudo adminuser
+student@Ubuntu-MySQL-VirtualBox:~$ id adminuser
+uid=1007(adminuser) gid=1010(adminuser) группы=1010(adminuser),27(sudo)
+student@Ubuntu-MySQL-VirtualBox:~$ su - adminuser
+Пароль: 
+To run a command as administrator (user "root"), use "sudo <command>".
+See "man sudo_root" for details.
+
+adminuser@Ubuntu-MySQL-VirtualBox:~$ sudo whoami
+[sudo] пароль для adminuser: 
+root
+
