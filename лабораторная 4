@@ -1,0 +1,35 @@
+student@Ubuntu-MySQL-VirtualBox:~$ echo "FILE 1" > file1
+student@Ubuntu-MySQL-VirtualBox:~$ cp file1 file2
+student@Ubuntu-MySQL-VirtualBox:~$ ln -s file1 file3
+student@Ubuntu-MySQL-VirtualBox:~$ ln file1 file4
+student@Ubuntu-MySQL-VirtualBox:~$ ls -li file*
+688696 -rw-rw-r-- 2 student student 7 ноя  3 18:53 file1
+688726 -rw-rw-r-- 1 student student 7 ноя  3 18:53 file2
+688727 lrwxrwxrwx 1 student student 5 ноя  3 18:54 file3 -> file1
+688696 -rw-rw-r-- 2 student student 7 ноя  3 18:53 file4
+student@Ubuntu-MySQL-VirtualBox:~$ rm file1
+student@Ubuntu-MySQL-VirtualBox:~$ cat file2
+FILE 1
+student@Ubuntu-MySQL-VirtualBox:~$ cat file3
+cat: file3: Нет такого файла или каталога
+student@Ubuntu-MySQL-VirtualBox:~$ cat file4
+FILE 1
+student@Ubuntu-MySQL-VirtualBox:~$ mv file2 new_file2
+student@Ubuntu-MySQL-VirtualBox:~$ mv file4 new_file4
+student@Ubuntu-MySQL-VirtualBox:~$ ln -s new_file2 symbolic_link2
+student@Ubuntu-MySQL-VirtualBox:~$ mkdir my_dir
+student@Ubuntu-MySQL-VirtualBox:~$ mv file3 my_dir/
+student@Ubuntu-MySQL-VirtualBox:~$ mv symbolic_link2 my_dir/
+student@Ubuntu-MySQL-VirtualBox:~$ ls -la my_dir/
+итого 8
+drwxrwxr-x  2 student student 4096 ноя  3 19:03 .
+drwxr-xr-x 24 student student 4096 ноя  3 19:03 ..
+lrwxrwxrwx  1 student student    5 ноя  3 18:54 file3 -> file1
+lrwxrwxrwx  1 student student    9 ноя  3 19:00 symbolic_link2 -> new_file2
+student@Ubuntu-MySQL-VirtualBox:~$ echo "Файл 1" > file_a
+student@Ubuntu-MySQL-VirtualBox:~$ echo "Файл 2" > file_b
+student@Ubuntu-MySQL-VirtualBox:~$ chmod 664 file_a
+student@Ubuntu-MySQL-VirtualBox:~$ chmod 600 file_b
+student@Ubuntu-MySQL-VirtualBox:~$ ls -l file_a file_b
+-rw-rw-r-- 1 student student 11 ноя  3 19:09 file_a
+-rw------- 1 student student 11 ноя  3 19:09 file_b
