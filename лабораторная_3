@@ -1,8 +1,11 @@
+Задание 1:
 student@Ubuntu-MySQL-VirtualBox:~$ echo "Hello world!" > myfile.txt
 student@Ubuntu-MySQL-VirtualBox:~$ ls
 examples.desktop  Видео      Загрузки     Музыка         Рабочий стол
 myfile.txt        Документы  Изображения  Общедоступные  Шаблоны
 student@Ubuntu-MySQL-VirtualBox:~$ cat /etc/* 2> errors.txt
+
+Задание 2:
 student@Ubuntu-MySQL-VirtualBox:~$ ls -l /etc | cut -d ' ' -f 1 | sort | uniq
 drwxr-s---
 drwxr-xr-x
@@ -15,6 +18,8 @@ lrwxrwxrwx
 -rw-rw-r--
 -rwxr-xr-x
 итого
+
+Задание 3:
 student@Ubuntu-MySQL-VirtualBox:~$ sudo nano /etc/ssh/sshd_config
 [sudo] пароль для student: 
 student@Ubuntu-MySQL-VirtualBox:~$ ls -1 /etc/ssh
@@ -41,6 +46,8 @@ student@Ubuntu-MySQL-VirtualBox:~$ cat > textfile.txt
 Hello world!
 
 Сигнал Ctrl+D - это не сигнал процессу, а признак конца файла (EOF - End Of File).
+
+Задание 4:
 student@Ubuntu-MySQL-VirtualBox:~$ mc
 student@Ubuntu-MySQL-VirtualBox:~$ ps aux | grep mc
 student   2567  0.0  0.3  69120  7996 pts/4    S+   16:36   0:00 mc
