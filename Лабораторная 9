@@ -1,0 +1,47 @@
+Задание 1:
+sudo apt update
+
+
+sudo apt install nginx -y
+
+
+sudo systemctl status nginx
+
+Задание 2:
+sudo apt install snapd -y
+
+
+sudo snap install htop
+
+Задание 3:
+sudo iptables -F
+
+sudo iptables -A INPUT -i lo -j ACCEPT
+
+sudo iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+
+sudo iptables -A INPUT -j DROP
+
+sudo apt install iptables-persistent -y
+sudo netfilter-persistent save
+
+Задание 4:
+echo 'net.ipv4.ip_forward=1' | sudo tee -a /etc/sysctl.conf
+sudo sysctl -p
+
+sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 8080
+sudo iptables -t nat -A OUTPUT -p tcp --dport 80 -j REDIRECT --to-port 8080
+
+sudo netfilter-persistent save
+
+Удаление: # Останавливаем nginx
+sudo systemctl stop nginx
+
+# Удаляем через dpkg
+sudo dpkg -r nginx
+
+# Полное удаление конфигов
+sudo dpkg -P nginx
