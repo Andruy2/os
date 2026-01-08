@@ -1,0 +1,157 @@
+student@Ubuntu-MySQL-VirtualBox:~$ mkdir -p ~/xrand && cd ~/xrand
+student@Ubuntu-MySQL-VirtualBox:~/xrand$ cat > xrand.c <<'EOF'
+> #include <linux/module.h>
+> #include <linux/fs.h>
+> #include <linux/miscdevice.h>
+> #include <linux/uaccess.h>
+> #include <linux/slab.h>
+> #include <linux/random.h>
+> #define DEV_NAME "xrand"  /* имя /dev/xrand */
+> struct xrand_state { u32 s; }; /* состояние на каждый открытый дескриптор */
+> static u32 xorshift32(u32 *state)
+> {
+>     u32 x = *state ? *state : 0x6C8E9CF5u; /* не нулевой seed */
+>     x ^= x << 13;
+>     x ^= x >> 17;
+>     x ^= x << 5;
+>     *state = x;
+>     return x;
+> }
+> static int xrand_open(struct inode *ino, struct file *filp)
+> {
+>     struct xrand_state *st = kmalloc(sizeof(*st), GFP_KERNEL);
+>     u32 seed = 0;
+>     if (!st) return -ENOMEM;
+>     get_random_bytes(&seed, sizeof(seed));
+>     if (seed == 0) seed = 1;
+>     st->s = seed;
+>     filp->private_data = st;
+>     return 0;
+> }
+> static int xrand_release(struct inode *ino, struct file *filp)
+> {
+>     kfree(filp->private_data);
+>     return 0;
+> }
+> 
+> static ssize_t xrand_read(struct file *filp, char __user *buf,
+>                           size_t count, loff_t *ppos)
+> {
+>     struct xrand_state *st = filp->private_data;
+>     size_t done = 0;
+>     if (count == 0) return 0;
+>     while (done < count) {
+>         u32 v = xorshift32(&st->s);
+>         size_t chunk = min(count - done, sizeof(v));
+>         if (copy_to_user((u8 __user *)buf + done, &v, chunk))
+>             return -EFAULT;
+>         done += chunk;
+>     }
+>     return done;
+> }
+> static ssize_t xrand_write(struct file *filp, const char __user *buf,
+>                            size_t count, loff_t *ppos)
+> {
+>     struct xrand_state *st = filp->private_data;
+>     if (count == sizeof(u32)) {          /* принимаем ровно 4 байта — seed */
+>         u32 seed = 0;
+>         if (copy_from_user(&seed, buf, sizeof(seed))) return -EFAULT;
+>         if (seed == 0) seed = 1;
+>         st->s = seed;
+>         return sizeof(seed);
+>     }
+>     return -EINVAL;                      /* другие размеры не поддерживаем */
+> }
+> static const struct file_operations xrand_fops = {
+>     .owner   = THIS_MODULE,
+>     .open    = xrand_open,
+>     .release = xrand_release,
+>     .read    = xrand_read,
+>     .write   = xrand_write,
+>     .llseek  = no_llseek,
+> };
+> /* miscdevice сам создаёт /dev/xrand; права 0666 — удобно тестить без sudo */
+> static struct miscdevice xrand_dev = {
+>     .minor = MISC_DYNAMIC_MINOR,
+>     .name  = DEV_NAME,
+>     .fops  = &xrand_fops,
+>     .mode  = 0666,
+> };
+> static int __init xrand_init(void)
+> {
+>     int ret = misc_register(&xrand_dev);
+>     if (ret) { pr_err("xrand: misc_register failed: %d\n", ret); return ret; }
+>     pr_info("xrand: loaded, device /dev/%s ready\n", DEV_NAME);
+>     return 0;
+> }
+> static void __exit xrand_exit(void)
+> {
+>     misc_deregister(&xrand_dev);
+>     pr_info("xrand: unloaded\n");
+> }
+> MODULE_LICENSE("GPL");
+> MODULE_AUTHOR("you");
+> MODULE_DESCRIPTION("Minimal xorshift32 char device via miscdevice (/dev/xrand)");
+> MODULE_VERSION("0.1");
+> 
+> module_init(xrand_init);
+> module_exit(xrand_exit);
+> EOF
+student@Ubuntu-MySQL-VirtualBox:~/xrand$ rm -f Makefile
+student@Ubuntu-MySQL-VirtualBox:~/xrand$ printf '%s\n' \
+> 'obj-m += xrand.o' \
+> 'KDIR := /lib/modules/$(shell uname -r)/build' \
+> 'PWD  := $(shell pwd)' \
+> '' \
+> 'all:' \
+> $'\t$(MAKE) -C $(KDIR) M=$(PWD) modules' \
+> '' \
+> 'clean:' \
+> $'\t$(MAKE) -C $(KDIR) M=$(PWD) clean' > Makefile
+student@Ubuntu-MySQL-VirtualBox:~/xrand$ make
+make -C /lib/modules/4.15.0-47-generic/build M=/home/student/xrand modules
+make[1]: вход в каталог «/usr/src/linux-headers-4.15.0-47-generic»
+  CC [M]  /home/student/xrand/xrand.o
+  Building modules, stage 2.
+  MODPOST 1 modules
+  LD [M]  /home/student/xrand/xrand.ko
+make[1]: выход из каталога «/usr/src/linux-headers-4.15.0-47-generic»
+student@Ubuntu-MySQL-VirtualBox:~/xrand$ sudo insmod xrand.ko
+[sudo] пароль для student: 
+Попробуйте ещё раз.
+[sudo] пароль для student: 
+student@Ubuntu-MySQL-VirtualBox:~/xrand$ sudo insmod xrand.ko
+insmod: ERROR: could not insert module xrand.ko: File exists
+student@Ubuntu-MySQL-VirtualBox:~/xrand$ dmesg | tail -n 10
+[ 1313.317913] xrand: loaded, device /dev/xrand ready
+[ 1388.707854] xrand: unloaded
+[ 4171.732218] 01:08:13.602278 timesync vgsvcTimeSyncWorker: Radical host time change: 2 444 496 000 000ns (HostNow=1 764 341 425 661 000 000 ns HostLast=1 764 338 981 165 000 000 ns)
+[ 4171.732300] 01:08:13.602441 timesync vgsvcTimeSyncWorker: Radical guest time change: 2 413 900 162 000ns (GuestNow=1 764 341 415 805 188 000 ns GuestLast=1 764 339 001 905 026 000 ns fSetTimeLastLoop=false)
+[ 4175.815866] clocksource: tsc: mask: 0xffffffffffffffff max_cycles: 0x2df11debcbd, max_idle_ns: 440795369960 ns
+[ 5698.598344] clocksource: timekeeping watchdog on CPU8: Marking clocksource 'tsc' as unstable because the skew is too large:
+[ 5698.598346] clocksource:                       'kvm-clock' wd_now: 537dcafe554 wd_last: 40197ae830a mask: ffffffffffffffff
+[ 5698.598347] clocksource:                       'tsc' cs_now: 10a1ae5f587a cs_last: cc4c8f67a46 mask: ffffffffffffffff
+[ 5698.598348] tsc: Marking TSC unstable due to clocksource watchdog
+[ 6078.975272] xrand: loaded, device /dev/xrand ready
+student@Ubuntu-MySQL-VirtualBox:~/xrand$ ls -l /dev/xrand
+crw-rw-rw- 1 root root 10, 53 ноя 28 18:22 /dev/xrand
+student@Ubuntu-MySQL-VirtualBox:~/xrand$ head -c 16 /dev/xrand | hexdump -C 
+00000000  44 c4 a0 e1 d0 22 2f dc  aa e3 d2 36 d9 49 55 3e  |D...."/....6.IU>|
+00000010
+student@Ubuntu-MySQL-VirtualBox:~/xrand$ printf '\x01\x00\x00\x00' > /dev/xrand 
+student@Ubuntu-MySQL-VirtualBox:~/xrand$ head -c 16 /dev/xrand | hexdump -C
+00000000  76 f5 47 9a 42 e7 c9 f9  92 7f 19 61 07 04 88 93  |v.G.B......a....|
+00000010
+student@Ubuntu-MySQL-VirtualBox:~/xrand$ sudo rmmod xrand
+student@Ubuntu-MySQL-VirtualBox:~/xrand$ dmesg | tail -n 10
+[ 1388.707854] xrand: unloaded
+[ 4171.732218] 01:08:13.602278 timesync vgsvcTimeSyncWorker: Radical host time change: 2 444 496 000 000ns (HostNow=1 764 341 425 661 000 000 ns HostLast=1 764 338 981 165 000 000 ns)
+[ 4171.732300] 01:08:13.602441 timesync vgsvcTimeSyncWorker: Radical guest time change: 2 413 900 162 000ns (GuestNow=1 764 341 415 805 188 000 ns GuestLast=1 764 339 001 905 026 000 ns fSetTimeLastLoop=false)
+[ 4175.815866] clocksource: tsc: mask: 0xffffffffffffffff max_cycles: 0x2df11debcbd, max_idle_ns: 440795369960 ns
+[ 5698.598344] clocksource: timekeeping watchdog on CPU8: Marking clocksource 'tsc' as unstable because the skew is too large:
+[ 5698.598346] clocksource:                       'kvm-clock' wd_now: 537dcafe554 wd_last: 40197ae830a mask: ffffffffffffffff
+[ 5698.598347] clocksource:                       'tsc' cs_now: 10a1ae5f587a cs_last: cc4c8f67a46 mask: ffffffffffffffff
+[ 5698.598348] tsc: Marking TSC unstable due to clocksource watchdog
+[ 6078.975272] xrand: loaded, device /dev/xrand ready
+[ 6154.534369] xrand: unloaded
+student@Ubuntu-MySQL-VirtualBox:~/xrand$
