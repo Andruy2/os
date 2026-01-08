@@ -1,0 +1,22 @@
+student@Ubuntu-MySQL-VirtualBox:~$ pgrep -x sshd
+815
+student@Ubuntu-MySQL-VirtualBox:~$ ps -p 815 -o pid,ppid,uid,cmd
+  PID  PPID   UID CMD
+  815     1     0 /usr/sbin/sshd -D
+student@Ubuntu-MySQL-VirtualBox:~$ pstree -sap 815
+systemd,1 splash
+  └─sshd,815 -D
+student@Ubuntu-MySQL-VirtualBox:~$ pgrep -x bash
+2644
+student@Ubuntu-MySQL-VirtualBox:~$ ps -p 2644 -o pid,ppid,uid,cmd
+  PID  PPID   UID CMD
+ 2644  2637  1000 bash
+student@Ubuntu-MySQL-VirtualBox:~$ pstree -sap 2644
+systemd,1 splash
+  └─lightdm,1097
+      └─lightdm,1177 --session-child 12 15
+          └─upstart,1186 --user
+              └─gnome-terminal-,2637
+                  └─bash,2644
+                      └─pstree,2729 -sap 2644
+student@Ubuntu-MySQL-VirtualBox:~$ pstree -sap 2651
